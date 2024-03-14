@@ -12,6 +12,7 @@ import type { FunctionComponent } from 'react';
 import type { EditorProps as MonacoEditorProps } from '@monaco-editor/react';
 import { Awareness } from 'y-protocols/awareness';
 import * as monaco from 'monaco-editor';
+import '../../main.css'
 import { UsersType } from '../../state/other.state';
 interface CursorsType {
   lineNumber: number,
@@ -37,9 +38,50 @@ export const MonacoWrapper: FunctionComponent<MonacoEditorProps> = ({
   const [myState, setMyState] = useState<{ name?: string; color?: string }>({})
   const [isTrue, setIsTrue] = useState(false)
   const [colors, setColors] = useState<string[]>([])
+  let decorations: string[] = []
   const [usersName, setUsersName] = useState<string[]>([])
   const { name, color, collaborateId } = useOtherState(state => state);
-
+  useEffect(() => {
+    if (!isTrue || !name) return;
+    function decorateElement(element: HTMLElement, color: string, text: string) {
+      const CursorDiv = document.createElement('div');
+      CursorDiv.style.background = `#${color}`;
+      CursorDiv.textContent = text;
+      CursorDiv.setAttribute('class', 'cursor-hover');
+      element.appendChild(CursorDiv);
+    }
+    function applyColorToElement(element: HTMLElement, color: string) {
+      element.style.background = `#${color}`;
+    }
+    function processElements(elements: HTMLCollection, backgroundC: string, decorate: boolean) {
+      for (let i = 0; i < elements.length; i++) {
+        elements[i].className.split(' ').forEach((item: any) => {
+          if (item.indexOf(backgroundC) !== -1) {
+            const color = item.replace(backgroundC, '');
+            if (myState?.color !== `#${color}`) {
+              if (decorate && !elements[i].textContent) {
+                const ind = allUsers.findIndex((elem: any) => elem.user?.color === `#${color}`);
+                (elements[i] as HTMLElement).innerHTML = '';
+                decorateElement(elements[i] as HTMLElement, color, allUsers[ind]?.user?.name ?? `#${color}`);
+              } else {
+                applyColorToElement(elements[i] as HTMLElement, color);
+              }
+            }
+          }
+        });
+      }
+    }
+    const applyColorElements = document.getElementsByClassName('applyColorToThis');
+    const myCursorElements = document.getElementsByClassName('my-cursor');
+    const backgroundC = 'backgroundC-';
+    processElements(applyColorElements, backgroundC, false);
+    processElements(myCursorElements, backgroundC, true);
+    const intervalId = setInterval(() => {
+      processElements(applyColorElements, backgroundC, false);
+      processElements(myCursorElements, backgroundC, true);
+    }, 1);
+    return () => clearInterval(intervalId);
+  }, [allUsers, isTrue, name]);
   const oncursorChange = (e: any) => {
     const position = e.position;
     const localState = awarenessElem?.getLocalState();
@@ -75,6 +117,26 @@ export const MonacoWrapper: FunctionComponent<MonacoEditorProps> = ({
       });
     }
   }, [monacoEditor, name, isTrue, isCollaborate])
+  function decorateCursors(newSelections: SelectionsType[], newCursors: CursorsType[], users: string[], editor: editor.IStandaloneCodeEditor) {
+    const r = [];
+    for (let p = 0; p < newCursors.length; p++) {
+      const curr: CursorsType = newCursors[p];
+      r.push({ range: new monaco.Range(curr.lineNumber, curr.column, curr.lineNumber, curr.column), options: { className: ` applyColorToThis ${myState?.color === users[p] ? '' : 'my-cursor'} backgroundC-${users[p]?.slice(1)}` } });
+    }
+    for (let p = 0; p < newSelections?.length; p++) {
+      const curr: SelectionsType = newSelections[p];
+      if (curr !== null) {
+        r.push({
+          range: new monaco.Range(curr.startLineNumber, curr.startColumn, curr.endLineNumber, curr.endColumn),
+          options: {
+            className: `${myState?.color === users[p] ? '' : 'applyColorToThis'} backgroundC-${users[p]?.slice(1)}`
+          }
+        }
+        );
+      }
+    }
+    decorations = editor?.deltaDecorations(decorations, r);
+  }
   function handleEditorDidMount(editor: editor.IStandaloneCodeEditor) {
     setIsTrue(true)
     editorRef.current = editor;
@@ -105,6 +167,7 @@ export const MonacoWrapper: FunctionComponent<MonacoEditorProps> = ({
         setUsersName([...usersName, name])
       }
       users = [...users, ...users]
+      decorateCursors(newSelections, newCursors, users, editor)
       setColors([...colors, ...users])
     })
     const model = editorRef.current?.getModel();

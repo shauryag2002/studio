@@ -89,9 +89,10 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
     };
 
     const copyCollaborationLink = (param: string) => {
-      navigator.clipboard.writeText(`http://localhost:3000?collaborate=${param}`)
+      const currentUrl = window.location.href;
+      navigator.clipboard.writeText(`${currentUrl}?collaborate=${param}`)
         .then(() => {
-          toast.success(`Collaboration Link Copied: http://localhost:3000?collaborate=${param}`, { duration: 5000, style: { maxWidth: 'max-content' } });
+          toast.success(`Collaboration Link Copied: ${currentUrl}?collaborate=${param}`, { duration: 5000, style: { maxWidth: 'max-content' } });
           navigate(`/?collaborate=${param}`);
         })
         .catch((error) => {
