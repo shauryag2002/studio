@@ -113,3 +113,20 @@
 .tippy-box[data-placement^="right"] > .tippy-arrow:before {
   border-right-color: rgba(17, 24, 39) !important;
 }
+
+.cursor {
+  border-left: 2px solid rgb(171, 171, 89);
+}
+
+.my-cursor {
+  width: 2px !important;
+}
+
+.cursor-hover {
+  position: absolute;
+  top: -23px;
+  border-radius: 7px;
+  border-bottom-left-radius: 0;
+  padding: 0 5px;
+  z-index: 10000000000;
+}
