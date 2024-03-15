@@ -1,9 +1,12 @@
 import React from 'react';
 import { IoGlobeOutline, IoLogoGithub, IoLogoSlack } from 'react-icons/io5';
+import { otherState } from '../state';
+import { UserPresence } from './common/UserPresence';
 
 interface ToolbarProps {}
 
 export const Toolbar: React.FunctionComponent<ToolbarProps> = () => {
+  const isCollaborate = otherState(state => state.isCollaborate);
   return (
     <div>
       <div className="px-2 border-b border-gray-700 bg-gray-800">
@@ -21,7 +24,13 @@ export const Toolbar: React.FunctionComponent<ToolbarProps> = () => {
             </div>
           </div>
           <ul className="flex items-center text-pink-500 mr-2">
-            <li className="text-xl opacity-75 hover:opacity-100">
+            {isCollaborate && (
+              <li className="text-xl opacity-75 hover:opacity-100">
+                <UserPresence />
+              </li>
+            )
+            }
+            <li className="text-xl ml-2 opacity-75 hover:opacity-100">
               <a href='https://asyncapi.com' title='AsyncAPI Website' target='_blank' rel="noreferrer">
                 <IoGlobeOutline />
               </a>
