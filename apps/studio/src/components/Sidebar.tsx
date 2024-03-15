@@ -1,14 +1,20 @@
 import { VscListSelection, VscCode, VscOpenPreview, VscGraph, VscNewFile, VscSettingsGear } from 'react-icons/vsc';
+import { FcCollaboration } from 'react-icons/fc';
+import { CiChat1 } from 'react-icons/ci';
 import { show as showModal } from '@ebay/nice-modal-react';
 
 import { Tooltip } from './common';
 import { SettingsModal, ConfirmNewFileModal } from './Modals';
+import { ChatModal } from './Modals/ChatModal';
 
-import { usePanelsState, panelsState, useDocumentsState } from '../state';
-
+import { usePanelsState, panelsState, useDocumentsState, otherState } from '../state';
 import type { FunctionComponent, ReactNode } from 'react';
+import { useEffect } from 'react';
 import type { PanelsState } from '../state/panels.state';
-
+import toast from 'react-hot-toast';
+import { CollaborationModal } from './Modals/CollaborationModal';
+import { useMutation, gql } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
 function updateState(panelName: keyof PanelsState['show'], type?: PanelsState['secondaryPanelType']) {
   const settingsState = panelsState.getState();
   let secondaryPanelType = settingsState.secondaryPanelType;
@@ -48,17 +54,80 @@ interface NavItem {
   enabled: boolean;
 }
 
-interface SidebarProps {}
+interface SidebarProps { }
 
 export const Sidebar: FunctionComponent<SidebarProps> = () => {
   const { show, secondaryPanelType } = usePanelsState();
+  const navigate = useNavigate();
   const document = useDocumentsState(state => state.documents['asyncapi']?.document) || null;
   const isV3 = document?.version() === '3.0.0';
-
+  const isCollaborate = otherState(state => state.isCollaborate);
+  const CREATE_ROOM = gql`
+      mutation Mutation {
+        createRoom
+      }
+  `;
+  const [createRoomMutation] = useMutation(CREATE_ROOM);
   if (show.activityBar === false) {
     return null;
   }
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    let collaborateParam = urlParams.get('collaborate');
+    otherState.setState({ collaborateId: collaborateParam ?? '' });
 
+    const handleCreateRoom = async () => {
+      try {
+        const result = await createRoomMutation();
+        otherState.setState({ collaborateId: result.data.createRoom });
+        collaborateParam = result.data.createRoom;
+        return result.data.createRoom;
+      } catch (error) {
+        console.error('Error creating room:', error);
+        return null;
+      }
+    };
+
+    const copyCollaborationLink = (param: string) => {
+      const currentUrl = window.location.href;
+      navigator.clipboard.writeText(`${currentUrl}?collaborate=${param}`)
+        .then(() => {
+          toast.success(`Collaboration Link Copied: ${currentUrl}?collaborate=${param}`, { duration: 5000, style: { maxWidth: 'max-content' } });
+          navigate(`/?collaborate=${param}`);
+        })
+        .catch((error) => {
+          console.error('Failed to copy link to clipboard:', error);
+        });
+    };
+
+    if (collaborateParam) {
+      otherState.setState({ isCollaborate: true });
+      if (localStorage.getItem('name') === null) {
+        otherState.setState({ detailsModal: true });
+        showModal(CollaborationModal);
+      } else {
+        otherState.setState({ isCollaborate: true, name: localStorage.getItem('name') ?? '', color: localStorage.getItem('color') ?? '' });
+      }
+    }
+
+    if (!isCollaborate) return;
+
+    if (localStorage.getItem('name') === null) {
+      otherState.setState({ detailsModal: true });
+      showModal(CollaborationModal);
+    } else {
+      otherState.setState({ isCollaborate: true, name: localStorage.getItem('name') ?? '', color: localStorage.getItem('color') ?? '' });
+    }
+
+    if (!collaborateParam) {
+      handleCreateRoom().then((result) => {
+        collaborateParam = result;
+        copyCollaborationLink(collaborateParam ?? '');
+      });
+    } else {
+      copyCollaborationLink(collaborateParam ?? '');
+    }
+  }, [isCollaborate]);
   let navigation: NavItem[] = [
     // navigation
     {
@@ -110,6 +179,35 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
       tooltip: 'New file',
       enabled: true
     },
+    // collaboration
+    {
+      name: 'collaboration',
+      title: 'Collaboration',
+      isActive: false,
+      onClick: () => {
+        if (localStorage.getItem('name') === null && localStorage.getItem('color') === null) {
+          otherState.setState({ detailsModal: true })
+          showModal(CollaborationModal)
+        } else {
+          otherState.setState({ isCollaborate: true, name: localStorage.getItem('name') ?? '', color: localStorage.getItem('color') ?? '' })
+        }
+      },
+      icon: <FcCollaboration className="w-5 h-5" />,
+      tooltip: 'Collaboration',
+      enabled: true
+    },
+    // Chat
+    {
+      name: 'Chat',
+      title: 'Chat',
+      isActive: false,
+      onClick: () => {
+        otherState.setState({ chatModal: true })
+      },
+      icon: <CiChat1 className="w-5 h-5" />,
+      tooltip: 'Chat',
+      enabled: isCollaborate
+    }
   ];
 
   navigation = navigation.filter(item => item.enabled);
@@ -135,15 +233,16 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
       <div className="flex flex-col">
         <Tooltip content='Studio settings' placement='right' hideOnClick={true}>
           <button
-            title="Studio settings"  
+            title="Studio settings"
             className='flex text-gray-500 hover:text-white focus:outline-none border-box p-4'
-            type="button"  
+            type="button"
             onClick={() => showModal(SettingsModal)}
           >
             <VscSettingsGear className="w-5 h-5" />
           </button>
         </Tooltip>
       </div>
+      <ChatModal />
     </div>
   );
 };
