@@ -1,15 +1,15 @@
 import { VscListSelection, VscCode, VscOpenPreview, VscGraph, VscNewFile, VscSettingsGear } from 'react-icons/vsc';
 import { FcCollaboration } from 'react-icons/fc';
-import { GoVersions } from 'react-icons/go';
 import { CiChat1 } from 'react-icons/ci';
 import { show as showModal } from '@ebay/nice-modal-react';
 
 import { Tooltip } from './common';
 import { SettingsModal, ConfirmNewFileModal } from './Modals';
+import { ChatModal } from './Modals/ChatModal';
 
 import { usePanelsState, panelsState, useDocumentsState, otherState } from '../state';
 import type { FunctionComponent, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { PanelsState } from '../state/panels.state';
 import toast from 'react-hot-toast';
 import { CollaborationModal } from './Modals/CollaborationModal';
@@ -195,6 +195,18 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
       icon: <FcCollaboration className="w-5 h-5" />,
       tooltip: 'Collaboration',
       enabled: true
+    },
+    // Chat
+    {
+      name: 'Chat',
+      title: 'Chat',
+      isActive: false,
+      onClick: () => {
+        otherState.setState({ chatModal: true })
+      },
+      icon: <CiChat1 className="w-5 h-5" />,
+      tooltip: 'Chat',
+      enabled: isCollaborate
     }
   ];
 
@@ -230,6 +242,7 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
           </button>
         </Tooltip>
       </div>
+      <ChatModal />
     </div>
   );
 };

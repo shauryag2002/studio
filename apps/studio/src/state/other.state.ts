@@ -14,6 +14,7 @@ export interface UsersType {
 export type OtherState = {
   editorHeight: string;
   templateRerender: boolean;
+  chatModal: boolean;
   detailsModal: boolean;
   isCollaborate: boolean;
   name: string;
@@ -25,6 +26,7 @@ export type OtherState = {
 export const otherState = create<OtherState>(() => ({
   editorHeight: 'calc(100% - 36px)',
   templateRerender: false,
+  chatModal: false,
   detailsModal: false,
   isCollaborate: false,
   users: [],
