@@ -1,6 +1,7 @@
 import { VscListSelection, VscCode, VscOpenPreview, VscGraph, VscNewFile, VscSettingsGear } from 'react-icons/vsc';
 import { FcCollaboration } from 'react-icons/fc';
 import { CiChat1 } from 'react-icons/ci';
+import { GoVersions } from 'react-icons/go';
 import { show as showModal } from '@ebay/nice-modal-react';
 
 import { Tooltip } from './common';
@@ -89,7 +90,7 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
     };
 
     const copyCollaborationLink = (param: string) => {
-      const currentUrl = window.location.href;
+      const currentUrl = window.location.href.split('?')[0];
       navigator.clipboard.writeText(`${currentUrl}?collaborate=${param}`)
         .then(() => {
           toast.success(`Collaboration Link Copied: ${currentUrl}?collaborate=${param}`, { duration: 5000, style: { maxWidth: 'max-content' } });
@@ -195,6 +196,18 @@ export const Sidebar: FunctionComponent<SidebarProps> = () => {
       icon: <FcCollaboration className="w-5 h-5" />,
       tooltip: 'Collaboration',
       enabled: true
+    },
+    // Versions
+    {
+      name: 'Versions',
+      title: 'Versions',
+      isActive: false,
+      onClick: () => {
+        otherState.setState({ versionModalOpen: !otherState.getState().versionModalOpen })
+      },
+      icon: <GoVersions className="w-5 h-5" />,
+      tooltip: 'Versions',
+      enabled: isCollaborate
     },
     // Chat
     {

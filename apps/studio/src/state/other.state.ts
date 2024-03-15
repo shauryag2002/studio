@@ -21,6 +21,8 @@ export type OtherState = {
   users: UsersType[];
   color: string;
   collaborateId: string;
+  versions: string[];
+  versionModalOpen: boolean;
 }
 
 export const otherState = create<OtherState>(() => ({
@@ -33,6 +35,8 @@ export const otherState = create<OtherState>(() => ({
   name: '',
   color: '',
   collaborateId: '',
+  versions: [],
+  versionModalOpen: false,
 }));
 
 export const useOtherState = otherState;

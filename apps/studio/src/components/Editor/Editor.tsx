@@ -6,8 +6,9 @@ import { MonacoWrapper } from './MonacoWrapper';
 import { Terminal } from '../Terminal/Terminal';
 
 import { useOtherState } from '../../state';
+import { Versions } from '../common/Versions';
 
-export interface EditorProps {}
+export interface EditorProps { }
 
 export const Editor: React.FunctionComponent<EditorProps> = () => {
   const editorHeight = useOtherState(state => state.editorHeight);
@@ -21,8 +22,9 @@ export const Editor: React.FunctionComponent<EditorProps> = () => {
         size={editorHeight}
         defaultSize={editorHeight}
       >
-        <div className="flex flex-1 flex-col h-full overflow-hidden">
+        <div className="flex flex-1 flex-col h-full overflow-auto">
           <EditorSidebar />
+          <Versions />
           <MonacoWrapper />
         </div>
         <Terminal />
